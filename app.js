@@ -58,7 +58,7 @@ app.get("/", function(req, res) {
         if (err) {
           console.log("error");
         } else {
-          console.log("done")
+          console.log("done");
         }
       });
       res.redirect("/");
@@ -95,7 +95,7 @@ app.get("/:custumListName", function(req, res) {
 
       }
     }
-  })
+  });
 });
 
 
