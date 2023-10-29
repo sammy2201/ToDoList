@@ -51,110 +51,106 @@ app.use(express.static("public"));
 
 //get
 
-app.get("/", function (req, res) {
-  Item.find(function (err, founditems) {
-    if (founditems.length === 0) {
-      Item.insertMany(defaultItem, function (err) {
-        if (err) {
-          console.log("error");
-        } else {
-          console.log("done");
-        }
-      });
+app.get("/", async (req, res) => {
+  try {
+    const foundItems = await Item.find();
+
+    if (foundItems.length === 0) {
+      await Item.insertMany(defaultItem);
+      console.log("done");
       res.redirect("/");
     } else {
       res.render("list", {
         listTitle: "Today",
-        newListItems: founditems,
+        newListItems: foundItems,
       });
     }
-  });
+  } catch (err) {
+    console.error("error: " + err);
+  }
 });
 
-app.get("/:custumListName", function (req, res) {
-  const custumListName = _.capitalize(req.params.custumListName);
+app.get("/:customListName", async (req, res) => {
+  const customListName = _.capitalize(req.params.customListName);
 
-  List.findOne(
-    {
-      name: custumListName,
-    },
-    function (err, foundList) {
-      if (!err) {
-        if (!foundList) {
-          //new items
-          const list = new List({
-            name: custumListName,
-            items: defaultItem,
-          });
+  try {
+    const foundList = await List.findOne({ name: customListName });
 
-          list.save();
-          res.redirect("/" + custumListName);
-        } else {
-          res.render("list", {
-            listTitle: foundList.name,
-            newListItems: foundList.items,
-          });
-        }
-      }
+    if (!foundList) {
+      // New list
+      const list = new List({
+        name: customListName,
+        items: defaultItem,
+      });
+
+      await list.save();
+      res.redirect("/" + customListName);
+    } else {
+      res.render("list", {
+        listTitle: foundList.name,
+        newListItems: foundList.items,
+      });
     }
-  );
+  } catch (err) {
+    console.error("error: " + err);
+  }
 });
 
 //post
 
-app.post("/", function (req, res) {
+app.post("/", async (req, res) => {
   const itemName = req.body.newItem;
-  const listname = req.body.list;
+  const listName = req.body.list;
   const item = new Item({
     name: itemName,
   });
 
-  if (listname === "Today") {
+  if (listName === "Today") {
+    await item.save();
     res.redirect("/");
-    item.save();
   } else {
-    List.findOne(
-      {
-        name: listname,
-      },
-      function (err, fountList) {
-        fountList.items.push(item);
-        fountList.save();
-        res.redirect("/" + listname);
+    try {
+      const foundList = await List.findOne({ name: listName });
+
+      if (foundList) {
+        foundList.items.push(item);
+        await foundList.save();
+        res.redirect("/" + listName);
       }
-    );
+    } catch (err) {
+      console.error("error: " + err);
+    }
   }
 });
 
-app.post("/delete", function (req, res) {
+app.post("/delete", async (req, res) => {
   const checkedId = req.body.checkbox;
   const listName = req.body.listName;
 
   if (listName === "Today") {
-    Item.findByIdAndRemove(checkedId, function (err) {
-      if (!err) {
-        console.log("done remove");
-        res.redirect("/");
-      }
-    });
+    try {
+      await Item.findByIdAndRemove(checkedId);
+      console.log("done remove");
+      res.redirect("/");
+    } catch (err) {
+      console.error("error: " + err);
+    }
   } else {
-    List.findOneAndUpdate(
-      {
-        name: listName,
-      },
-      {
-        $pull: {
-          items: {
-            _id: checkedId,
-          },
-        },
-      },
-      function (err, foundList) {
-        if (!err) {
+    try {
+      const foundList = await List.findOne({ name: listName });
+      if (foundList) {
+        const itemIndex = foundList.items.findIndex(
+          (item) => item._id.toString() === checkedId
+        );
+        if (itemIndex !== -1) {
+          foundList.items.splice(itemIndex, 1);
+          await foundList.save();
           res.redirect("/" + listName);
         }
       }
-    );
+    } catch (err) {
+      console.error("error: " + err);
+    }
   }
 });
 
