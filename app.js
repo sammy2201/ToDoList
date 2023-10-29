@@ -7,7 +7,7 @@ const _ = require("lodash");
 require("dotenv").config();
 
 const app = express();
-mongoose.connect(process.env.mongoURL, {
+mongoose.connect("mongodb+srv://bhavanish2000:5*BZ*m$H55tt9+-@cluster0.e0oskxe.mongodb.net/?retryWrites=true&w=majority", {
   useUnifiedTopology: true,
   useNewUrlParser: true,
 });
