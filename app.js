@@ -7,9 +7,13 @@ const _ = require("lodash");
 require("dotenv").config();
 
 const app = express();
-mongoose.connect("mongodb+srv://bhavanish2000:5*BZ*m$H55tt9+-@cluster0.e0oskxe.mongodb.net/?retryWrites=true&w=majority", {
-  useUnifiedTopology: true,
+
+mongoose.connect(process.env.mongoURL, {
   useNewUrlParser: true,
+  useUnifiedTopology: true,
+  ssl: true,
+  sslValidate: true,
+  // sslCA: yourSSLCertificate, // path to your SSL certificate file
 });
 
 //schemacreate
@@ -160,9 +164,9 @@ app.get("/about", function (req, res) {
 
 let port = process.env.PORT;
 if (port == null || port == "") {
-  port = 3001;
+  port = 3000;
 }
 
 app.listen(port, function () {
-  console.log("Server started on port 3001");
+  console.log("Server started on port 3000");
 });
